@@ -75,7 +75,7 @@ def generate_two_stage_gif(font_title, font_sub, font_mono, output_path):
         # 根據階段繪製不同畫面與狀態
         # i = 0~25: 第一階段 - 稀疏影格傳送 (0s 與 10s)
         # i = 26~50: 雲端發現跳躍性變化，發送「補幀請求」
-        # i = 51~80: 第二階段 - 本地補幀傳送 (00:04)，AI 成功識別追撞瞬間
+        # i = 51~80: 第二階段 - 本地補幀傳送 (00:08)，AI 成功識別追撞瞬間
         
         if i < 25:
             # 1. 第一階段：稀疏傳送
@@ -115,7 +115,7 @@ def generate_two_stage_gif(font_title, font_sub, font_mono, output_path):
             # 雲端 AI 狀態：發送補幀請求
             draw.text((ai_x1 + 15, ai_y1 + 45), "狀態: 觸發補幀回饋", fill="#F59E0B", font=font_sub)
             draw.text((ai_x1 + 15, ai_y1 + 75), "AI 指令發送中:", fill="#F59E0B", font=font_sub)
-            draw.text((ai_x1 + 15, ai_y1 + 100), "← 請求 00:04", fill="#00F2FE", font=font_title)
+            draw.text((ai_x1 + 15, ai_y1 + 100), "← 請求 00:08", fill="#00F2FE", font=font_title)
             draw.text((ai_x1 + 15, ai_y1 + 125), "  關鍵影格", fill="#00F2FE", font=font_title)
 
             # 網路傳輸包 (藍點從右往左飛)
@@ -128,25 +128,25 @@ def generate_two_stage_gif(font_title, font_sub, font_mono, output_path):
 
         else:
             # 3. 第二階段：本地補幀傳送與確認
-            # 畫面上顯示車禍追撞瞬間 (00:04)
+            # 畫面上顯示車禍追撞瞬間 (00:08)
             draw.rectangle([(white_car_x, white_car_y), (white_car_x + 24, white_car_y + 11)], fill="#E5E7EB", outline="#9CA3AF")
             draw.rectangle([(white_car_x - 15, white_car_y + 2), (white_car_x + 5, white_car_y + 13)], fill="#3B82F6", outline="#1D4ED8")
             draw_star_helper(draw, white_car_x - 5, white_car_y + 6, 12, "#EF4444" if i % 4 < 2 else "#FBBF24")
-            draw.text((white_car_x - 30, white_car_y - 14), "🚨 碰撞瞬間(00:04)", fill="#EF4444", font=font_mono)
+            draw.text((white_car_x - 30, white_car_y - 14), "🚨 碰撞瞬間(00:08)", fill="#EF4444", font=font_mono)
 
             # 雲端 AI 狀態：補幀成功，辨識完成
             draw.text((ai_x1 + 15, ai_y1 + 45), "狀態: 補幀識別成功", fill="#10B981", font=font_sub)
             draw.text((ai_x1 + 15, ai_y1 + 75), "精準定位事故:", fill="#10B981", font=font_sub)
-            draw.text((ai_x1 + 15, ai_y1 + 100), "• 00:04 追撞點", fill="#10B981", font=font_sub)
+            draw.text((ai_x1 + 15, ai_y1 + 100), "• 00:08 追撞點", fill="#10B981", font=font_sub)
             draw.text((ai_x1 + 15, ai_y1 + 125), "• 責任釐清完成", fill="#10B981", font=font_sub)
             draw.text((ai_x1 + 15, ai_y1 + 155), "✅ 成功! 累計省 95%", fill="#10B981", font=font_sub)
 
             # 網路傳輸包 (綠色圓點從左往右飛)
             pkg_x = cctv_x2 + int((ai_x1 - cctv_x2) * ((i - 50) / 30.0))
             draw.ellipse([(pkg_x-5, 135), (pkg_x+5, 145)], fill="#10B981")
-            draw.text((pkg_x - 15, 115), "00:04", fill="#10B981", font=font_mono)
+            draw.text((pkg_x - 15, 115), "00:08", fill="#10B981", font=font_mono)
 
-            sub_text = "[第二階段] 本地只補提 00:04 影格，雲端 AI 成功重建事故過程，兼顧省錢與精準"
+            sub_text = "[第二階段] 本地只補提 00:08 影格，雲端 AI 成功重建事故過程，兼顧省錢與精準"
             sub_col = "#10B981"
 
         # 3. 底部影片時間軸與採樣格 (245px 起)
@@ -166,13 +166,13 @@ def generate_two_stage_gif(font_title, font_sub, font_mono, output_path):
         draw.rectangle([(box1_x + 50, box_y + 20), (box1_x + 60, box_y + 26)], fill="#E5E7EB")
         draw.text((box1_x + 5, box_y + box_height + 4), "00:00 正常", fill="#10B981", font=font_mono)
 
-        # 影格 2: 00:04 (第一階段遺漏 / 第二階段補回)
+        # 影格 2: 00:08 (第一階段遺漏 / 第二階段補回)
         box2_x = 160
         if i < 50:
             # 遺漏狀態
             draw.rectangle([(box2_x, box_y), (box2_x + box_width, box_y + box_height)], fill="#1E2030", outline="#EF4444", width=1)
             draw.text((box2_x + 15, box_y + 15), "【 遺漏 】", fill="#EF4444", font=font_sub)
-            draw.text((box2_x + 2, box_y + box_height + 4), "00:04 漏判區間", fill="#EF4444", font=font_mono)
+            draw.text((box2_x + 2, box_y + box_height + 4), "00:08 漏判區間", fill="#EF4444", font=font_mono)
         else:
             # 補回狀態
             draw.rectangle([(box2_x, box_y), (box2_x + box_width, box_y + box_height)], outline="#10B981", width=2)
@@ -180,7 +180,7 @@ def generate_two_stage_gif(font_title, font_sub, font_mono, output_path):
             draw.rectangle([(box2_x + 35, box_y + 20), (box2_x + 45, box_y + 26)], fill="#E5E7EB")
             draw.rectangle([(box2_x + 25, box_y + 21), (box2_x + 35, box_y + 27)], fill="#3B82F6")
             draw_star_helper(draw, box2_x + 35, box_y + 23, 5, "#FBBF24")
-            draw.text((box2_x - 5, box_y + box_height + 4), "00:04 補回 (撞擊點)", fill="#10B981", font=font_mono)
+            draw.text((box2_x - 5, box_y + box_height + 4), "00:08 補回 (撞擊點)", fill="#10B981", font=font_mono)
 
         # 影格 3: 00:10 (事故後)
         box3_x = 280
