@@ -23,83 +23,186 @@ def draw_rounded_rect(draw, coords, r, fill, outline=None, width=1):
 
 def generate_two_stage_gif(font_title, font_sub, font_mono, output_path):
     print("正在生成「雙階段按需補幀」POC 概念動畫 (GIF)...")
+    
+    def draw_star_helper(draw, x, y, size, color):
+        points = []
+        num_points = 8
+        for idx in range(num_points * 2):
+            angle = idx * math.pi / num_points
+            r = size if idx % 2 == 0 else size / 2.5
+            points.append((x + r * math.cos(angle), y + r * math.sin(angle)))
+        draw.polygon(points, fill=color)
+
     frames = []
     width, height = 640, 360
-    total_frames = 60
+    total_frames = 80
 
     for i in range(total_frames):
         img = Image.new("RGB", (width, height), "#0B0F19")
         draw = ImageDraw.Draw(img)
         
-        # 標題
-        draw.text((20, 15), "方案二：雙階段「按需補幀」回饋機制 (Two-Stage Loop)", fill="#00F2FE", font=font_title)
+        # 1. 頂部標題與作者
+        draw.text((20, 12), "方案二：雙階段「按需補幀」回饋機制 (Two-Stage Loop)", fill="#00F2FE", font=font_title)
         draw.text((480, 15), "Falo x Force Cheng", fill="#243049", font=font_sub)
 
-        # 繪製左方：本地伺服器/影片源
-        server_x, server_y = 100, 180
-        draw.rectangle([(server_x-40, server_y-30), (server_x+40, server_y+30)], fill="#1F2937", outline="#4FACFE", width=2)
-        draw.text((server_x-32, server_y-10), "本地主機", fill="#F3F4F6", font=font_sub)
+        # 2. 繪製左側 CCTV 畫面模擬區 與 右側 雲端 AI 狀態區
+        # 左側 CCTV (20 - 410px, 45 - 225px)
+        cctv_x1, cctv_y1, cctv_x2, cctv_y2 = 20, 45, 410, 225
+        draw.rectangle([(cctv_x1, cctv_y1), (cctv_x2, cctv_y2)], outline="#243049", width=2)
+        draw.text((cctv_x1 + 10, cctv_y1 + 8), "本地 CCTV 監控畫面 (00:00 - 00:10)", fill="#9CA3AF", font=font_mono)
 
-        # 繪製右方：雲端 AI 大模型
-        ai_x, ai_y = 540, 180
-        draw.ellipse([(ai_x-35, ai_y-35), (ai_x+35, ai_y+35)], fill="#0E1420", outline="#00F2FE", width=2)
-        draw.text((ai_x-22, ai_y-10), "雲端 AI", fill="#00F2FE", font=font_sub)
-
-        # 時間軸 (上方)
-        timeline_y = 80
-        draw.line([(80, timeline_y), (560, timeline_y)], fill="#243049", width=4)
-        draw.text((75, timeline_y+10), "00:00", fill="#6B7280", font=font_mono)
-        draw.text((535, timeline_y+10), "00:10", fill="#6B7280", font=font_mono)
-
-        # 模擬狀態演進：
-        # i = 0~20：第一階段 - 傳送稀疏影格
-        # i = 20~40：AI 判斷有問題，回傳補幀請求
-        # i = 40~60：第二階段 - 本地補幀並再次傳送，AI 確認成功
+        # 繪製公路與車道
+        road_y1, road_y2 = cctv_y1 + 35, cctv_y2 - 35
+        draw.rectangle([(cctv_x1 + 2, road_y1), (cctv_x2 - 2, road_y2)], fill="#1F2937") # 柏油路
+        draw.line([(cctv_x1 + 2, road_y1 + 4), (cctv_x2 - 2, road_y1 + 4)], fill="#F59E0B", width=2) # 雙黃線
         
-        if i < 20:
-            # 1. 稀疏傳送：畫面上只標註兩個稀疏的採樣點 (0s 與 10s)
-            draw.ellipse([(80-5, timeline_y-5), (80+5, timeline_y+5)], fill="#EF4444")
-            draw.ellipse([(560-5, timeline_y-5), (560+5, timeline_y+5)], fill="#EF4444")
+        for x_dash in range(cctv_x1 + 10, cctv_x2 - 10, 35):
+            draw.line([(x_dash, (road_y1 + road_y2) // 2), (x_dash + 15, (road_y1 + road_y2) // 2)], fill="#F3F4F6", width=1)
             
-            # 飛行的信號封包 (左往右)
-            pkg_x = server_x + int((ai_x - server_x) * (i / 20.0))
-            draw.ellipse([(pkg_x-6, server_y-6), (pkg_x+6, server_y+6)], fill="#EF4444")
+        draw.line([(cctv_x1 + 2, road_y2 - 4), (cctv_x2 - 2, road_y2 - 4)], fill="#F3F4F6", width=2) # 路肩
+
+        # 車道上的車輛
+        white_car_x = cctv_x2 - 80
+        white_car_y = road_y1 + 25
+        blue_car_start = cctv_x1 + 20
+        blue_car_end = white_car_x - 30
+
+        # 右側 雲端 AI 狀態區 (430 - 620px, 45 - 225px)
+        ai_x1, ai_y1, ai_x2, ai_y2 = 430, 45, 620, 225
+        draw.rectangle([(ai_x1, ai_y1), (ai_x2, ai_y2)], fill="#0E1420", outline="#00F2FE" if i >= 26 else "#243049", width=2)
+        draw.text((ai_x1 + 12, ai_y1 + 10), "☁️ 雲端 AI 分析狀態", fill="#00F2FE", font=font_sub)
+
+        # 根據階段繪製不同畫面與狀態
+        # i = 0~25: 第一階段 - 稀疏影格傳送 (0s 與 10s)
+        # i = 26~50: 雲端發現跳躍性變化，發送「補幀請求」
+        # i = 51~80: 第二階段 - 本地補幀傳送 (00:04)，AI 成功識別追撞瞬間
+        
+        if i < 25:
+            # 1. 第一階段：稀疏傳送
+            # 繪製車輛：白車故障閃黃燈，藍車在左側平穩前進
+            draw.rectangle([(white_car_x, white_car_y), (white_car_x + 24, white_car_y + 11)], fill="#E5E7EB", outline="#9CA3AF")
+            if i % 6 < 3:
+                draw.ellipse([(white_car_x - 2, white_car_y), (white_car_x, white_car_y + 2)], fill="#F59E0B")
+                draw.text((white_car_x - 15, white_car_y - 12), "故障車", fill="#F59E0B", font=font_mono)
             
-            draw.text((150, 240), "【第一階段】傳送稀疏影格拼圖 (節省 98% Token)", fill="#9CA3AF", font=font_sub)
-            draw.text((150, 265), "→ 只擷取 00:00 與 00:10 兩個端點進行快速初掃", fill="#6B7280", font=font_sub)
-            
-        elif i >= 20 and i < 40:
-            # 2. AI 請求補幀
-            draw.ellipse([(80-5, timeline_y-5), (80+5, timeline_y+5)], fill="#EF4444")
-            draw.ellipse([(560-5, timeline_y-5), (560+5, timeline_y+5)], fill="#EF4444")
-            
-            # 閃爍的 AI 思考標記
-            draw.text((ai_x-50, ai_y-60), "⚠️ 偵測到異常！", fill="#F59E0B", font=font_sub)
-            
-            # 反向飛行信號封包 (右往左)
-            pkg_x = ai_x - int((ai_x - server_x) * ((i - 20) / 20.0))
-            draw.ellipse([(pkg_x-6, server_y-6), (pkg_x+6, server_y+6)], fill="#F59E0B")
-            
-            draw.text((150, 240), "【AI 反饋】偵測到 00:04 處有像素變動，發送補幀指令", fill="#F59E0B", font=font_sub)
-            draw.text((150, 265), "← 請求本地主機補提 00:02、00:04、00:06、00:08 影格", fill="#6B7280", font=font_sub)
-            
+            blue_x = blue_car_start + int((blue_car_end - blue_car_start) * (i / 25.0) * 0.4)
+            draw.rectangle([(blue_x, white_car_y), (blue_x + 24, white_car_y + 11)], fill="#3B82F6", outline="#1D4ED8")
+
+            # 雲端 AI 狀態：等待並處理稀疏拼圖
+            draw.text((ai_x1 + 15, ai_y1 + 45), "狀態: 稀疏初掃中", fill="#9CA3AF", font=font_sub)
+            draw.text((ai_x1 + 15, ai_y1 + 75), "已收影格:", fill="#9CA3AF", font=font_sub)
+            draw.text((ai_x1 + 15, ai_y1 + 95), "• 00:00 (正常)", fill="#10B981", font=font_sub)
+            draw.text((ai_x1 + 15, ai_y1 + 115), "• 00:10 (事故後)", fill="#EF4444", font=font_sub)
+            draw.text((ai_x1 + 15, ai_y1 + 145), "⚠️ 遺漏碰撞瞬間!", fill="#F59E0B", font=font_sub)
+
+            # 網路傳輸包 (紅點從左往右飛)
+            pkg_x = cctv_x2 + int((ai_x1 - cctv_x2) * (i / 25.0))
+            draw.ellipse([(pkg_x-5, 135), (pkg_x+5, 145)], fill="#EF4444")
+            draw.text((pkg_x - 15, 115), "0s/10s", fill="#EF4444", font=font_mono)
+
+            sub_text = "[第一階段] 本地端僅擷取 00:00 與 00:10 進行低成本快速掃描 (節省 98% Token)"
+            sub_col = "#9CA3AF"
+
+        elif i >= 25 and i < 50:
+            # 2. AI 思考並發送補幀指令
+            # 畫面同第一階段，但 AI 框亮起警告，反向飛回補幀信號
+            draw.rectangle([(white_car_x, white_car_y), (white_car_x + 24, white_car_y + 11)], fill="#E5E7EB", outline="#9CA3AF")
+            if i % 6 < 3:
+                draw.ellipse([(white_car_x - 2, white_car_y), (white_car_x, white_car_y + 2)], fill="#F59E0B")
+            blue_x = blue_car_start + int((blue_car_end - blue_car_start) * 0.4)
+            draw.rectangle([(blue_x, white_car_y), (blue_x + 24, white_car_y + 11)], fill="#3B82F6", outline="#1D4ED8")
+
+            # 雲端 AI 狀態：發送補幀請求
+            draw.text((ai_x1 + 15, ai_y1 + 45), "狀態: 觸發補幀回饋", fill="#F59E0B", font=font_sub)
+            draw.text((ai_x1 + 15, ai_y1 + 75), "AI 指令發送中:", fill="#F59E0B", font=font_sub)
+            draw.text((ai_x1 + 15, ai_y1 + 100), "← 請求 00:04", fill="#00F2FE", font=font_title)
+            draw.text((ai_x1 + 15, ai_y1 + 125), "  關鍵影格", fill="#00F2FE", font=font_title)
+
+            # 網路傳輸包 (藍點從右往左飛)
+            pkg_x = ai_x1 - int((ai_x1 - cctv_x2) * ((i - 25) / 25.0))
+            draw.ellipse([(pkg_x-5, 135), (pkg_x+5, 145)], fill="#00F2FE")
+            draw.text((pkg_x - 20, 115), "補幀請求", fill="#00F2FE", font=font_mono)
+
+            sub_text = "[雲端回饋] AI 偵測到跳躍性狀態變更，自動對本地 CCTV 下達「按需補幀」指令"
+            sub_col = "#F59E0B"
+
         else:
-            # 3. 補幀傳送
-            # 時間軸上補滿密集的綠色圓點
-            for t_step in range(80, 561, 96):
-                draw.ellipse([(t_step-5, timeline_y-5), (t_step+5, timeline_y+5)], fill="#10B981")
-                
-            # 飛行的信號封包 (左往右，綠色)
-            pkg_x = server_x + int((ai_x - server_x) * ((i - 40) / 20.0))
-            draw.ellipse([(pkg_x-6, server_y-6), (pkg_x+6, server_y+6)], fill="#10B981")
-            
-            draw.text((ai_x-45, ai_y-60), "✅ 識別成功！", fill="#10B981", font=font_sub)
-            draw.text((150, 240), "【第二階段】本地補齊影格並傳送，AI 完成精準分析", fill="#10B981", font=font_sub)
-            draw.text((150, 265), "→ 只在需要時補充中間影格，維持極低耗費與高精準度", fill="#6B7280", font=font_sub)
+            # 3. 第二階段：本地補幀傳送與確認
+            # 畫面上顯示車禍追撞瞬間 (00:04)
+            draw.rectangle([(white_car_x, white_car_y), (white_car_x + 24, white_car_y + 11)], fill="#E5E7EB", outline="#9CA3AF")
+            draw.rectangle([(white_car_x - 15, white_car_y + 2), (white_car_x + 5, white_car_y + 13)], fill="#3B82F6", outline="#1D4ED8")
+            draw_star_helper(draw, white_car_x - 5, white_car_y + 6, 12, "#EF4444" if i % 4 < 2 else "#FBBF24")
+            draw.text((white_car_x - 30, white_car_y - 14), "🚨 碰撞瞬間(00:04)", fill="#EF4444", font=font_mono)
 
-        # 箭頭連線
-        draw.line([(server_x+50, server_y), (ai_x-50, server_y)], fill="#243049", width=2)
+            # 雲端 AI 狀態：補幀成功，辨識完成
+            draw.text((ai_x1 + 15, ai_y1 + 45), "狀態: 補幀識別成功", fill="#10B981", font=font_sub)
+            draw.text((ai_x1 + 15, ai_y1 + 75), "精準定位事故:", fill="#10B981", font=font_sub)
+            draw.text((ai_x1 + 15, ai_y1 + 100), "• 00:04 追撞點", fill="#10B981", font=font_sub)
+            draw.text((ai_x1 + 15, ai_y1 + 125), "• 責任釐清完成", fill="#10B981", font=font_sub)
+            draw.text((ai_x1 + 15, ai_y1 + 155), "✅ 成功! 累計省 95%", fill="#10B981", font=font_sub)
+
+            # 網路傳輸包 (綠色圓點從左往右飛)
+            pkg_x = cctv_x2 + int((ai_x1 - cctv_x2) * ((i - 50) / 30.0))
+            draw.ellipse([(pkg_x-5, 135), (pkg_x+5, 145)], fill="#10B981")
+            draw.text((pkg_x - 15, 115), "00:04", fill="#10B981", font=font_mono)
+
+            sub_text = "[第二階段] 本地只補提 00:04 影格，雲端 AI 成功重建事故過程，兼顧省錢與精準"
+            sub_col = "#10B981"
+
+        # 3. 底部影片時間軸與採樣格 (245px 起)
+        draw.text((20, 235), "教學故事板影格 (Filmstrip Storyboard Slots)", fill="#9CA3AF", font=font_sub)
         
+        # 繪製三個影格格線
+        box_width = 80
+        box_height = 45
+        box_y = 258
+        
+        # 影格 1: 00:00 (正常)
+        box1_x = 40
+        draw.rectangle([(box1_x, box_y), (box1_x + box_width, box_y + box_height)], outline="#10B981", width=2)
+        # 簡易繪製格子內畫面
+        draw.rectangle([(box1_x + 2, box_y + 15), (box1_x + box_width - 2, box_y + box_height - 15)], fill="#1F2937")
+        draw.rectangle([(box1_x + 10, box_y + 20), (box1_x + 20, box_y + 26)], fill="#3B82F6")
+        draw.rectangle([(box1_x + 50, box_y + 20), (box1_x + 60, box_y + 26)], fill="#E5E7EB")
+        draw.text((box1_x + 5, box_y + box_height + 4), "00:00 正常", fill="#10B981", font=font_mono)
+
+        # 影格 2: 00:04 (第一階段遺漏 / 第二階段補回)
+        box2_x = 160
+        if i < 50:
+            # 遺漏狀態
+            draw.rectangle([(box2_x, box_y), (box2_x + box_width, box_y + box_height)], fill="#1E2030", outline="#EF4444", width=1)
+            draw.text((box2_x + 15, box_y + 15), "【 遺漏 】", fill="#EF4444", font=font_sub)
+            draw.text((box2_x + 2, box_y + box_height + 4), "00:04 漏判區間", fill="#EF4444", font=font_mono)
+        else:
+            # 補回狀態
+            draw.rectangle([(box2_x, box_y), (box2_x + box_width, box_y + box_height)], outline="#10B981", width=2)
+            draw.rectangle([(box2_x + 2, box_y + 15), (box2_x + box_width - 2, box_y + box_height - 15)], fill="#1F2937")
+            draw.rectangle([(box2_x + 35, box_y + 20), (box2_x + 45, box_y + 26)], fill="#E5E7EB")
+            draw.rectangle([(box2_x + 25, box_y + 21), (box2_x + 35, box_y + 27)], fill="#3B82F6")
+            draw_star_helper(draw, box2_x + 35, box_y + 23, 5, "#FBBF24")
+            draw.text((box2_x - 5, box_y + box_height + 4), "00:04 補回 (撞擊點)", fill="#10B981", font=font_mono)
+
+        # 影格 3: 00:10 (事故後)
+        box3_x = 280
+        draw.rectangle([(box3_x, box_y), (box3_x + box_width, box_y + box_height)], outline="#EF4444" if i < 50 else "#10B981", width=2)
+        draw.rectangle([(box3_x + 2, box_y + 15), (box3_x + box_width - 2, box_y + box_height - 15)], fill="#1F2937")
+        draw.rectangle([(box3_x + 40, box_y + 20), (box3_x + 50, box_y + 26)], fill="#E5E7EB")
+        draw.rectangle([(box3_x + 30, box_y + 21), (box3_x + 40, box_y + 27)], fill="#3B82F6")
+        draw.text((box3_x + 2, box_y + box_height + 4), "00:10 事故現場", fill="#10B981", font=font_mono)
+
+        # 右側 Token 累計節省百分比
+        draw.text((435, 245), "雙階段分析 Token 累計節省", fill="#9CA3AF", font=font_sub)
+        savings_text = "98.1%" if i < 50 else "95.6%"
+        savings_color = "#00F2FE" if i < 50 else "#10B981"
+        draw.text((435, 268), savings_text, fill=savings_color, font=ImageFont.truetype("/System/Library/Fonts/Arial Unicode.ttf" if os.path.exists("/System/Library/Fonts/Arial Unicode.ttf") else "/System/Library/Fonts/STHeiti Medium.ttc", 36))
+        
+        # 字幕指示
+        draw.rectangle([(20, height - 35), (width - 20, height - 10)], fill="#0E1420")
+        draw.text((30, height - 31), sub_text, fill=sub_col, font=font_sub)
+
+        # 封包傳輸箭頭背景線
+        draw.line([(cctv_x2 + 15, 140), (ai_x1 - 15, 140)], fill="#243049", width=2)
+
         frames.append(img)
         
     frames[0].save(output_path, save_all=True, append_images=frames[1:], duration=150, loop=0)
